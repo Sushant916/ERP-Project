@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harbor &amp; Vale ERP</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#eef0ec;--panel:#fbfbf9;--ink:#1b2427;--mute:#5d6b6e;--line:#d6dbd5;--brand:#0f4c4a;--brand-ink:#fff;--warn:#b86e00;--bad:#a8372f;--ok:#2d6b3a;--chip:#e3e9e4;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121819;--panel:#1a2224;--ink:#e6ecea;--mute:#93a3a5;--line:#2c3739;--brand:#5fb8b0;--brand-ink:#0d1b1a;--warn:#e8a43a;--bad:#ee7b72;--ok:#78c488;--chip:#243033}}
+:root[data-theme="dark"]{--bg:#121819;--panel:#1a2224;--ink:#e6ecea;--mute:#93a3a5;--line:#2c3739;--brand:#5fb8b0;--brand-ink:#0d1b1a;--warn:#e8a43a;--bad:#ee7b72;--ok:#78c488;--chip:#243033}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+nav{background:var(--brand);color:var(--brand-ink);padding:22px 14px;position:sticky;top:0;height:100vh;align-self:start}
+nav h1{font-size:17px;margin:0 8px 22px;font-weight:700;letter-spacing:.2px}
+nav h1 small{display:block;font-weight:400;opacity:.75;font-size:12px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:9px 10px;border-radius:6px;cursor:pointer;opacity:.82}
+nav button:hover{opacity:1;background:rgba(255,255,255,.1)}
+nav button[aria-current="page"]{opacity:1;background:rgba(255,255,255,.18);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+main{padding:28px clamp(16px,3vw,40px);max-width:1100px;width:100%}
+h2{font-size:26px;margin:0 0 4px;letter-spacing:-.3px}
+.sub{color:var(--mute);margin:0 0 22px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.kpi span{color:var(--mute);font-size:13px}
+.kpi b{display:block;font-size:24px;margin-top:2px;font-variant-numeric:tabular-nums}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:18px}
+.panel h3{margin:0 0 10px;font-size:16px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:500;font-size:13px}
+td.n,th.n{text-align:right}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--chip);font-size:12.5px}
+.chip.warn{color:var(--warn);border:1px solid var(--warn);background:none}
+.chip.ok{color:var(--ok)}
+.chip.bad{color:var(--bad);border:1px solid var(--bad);background:none}
+.btn{background:var(--brand);color:var(--brand-ink);border:0;border-radius:6px;padding:7px 13px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:none;color:var(--brand);border:1px solid var(--brand);padding:4px 10px;font-weight:500}
+form.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:3px}
+input,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);min-width:130px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+.bar{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13px}
+.bar i{display:block;height:12px;background:var(--brand);border-radius:3px}
+.bar span:first-child{width:56px;color:var(--mute)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+@media (max-width:820px){
+.app{grid-template-columns:1fr}
+nav{position:sticky;height:auto;padding:12px 10px;display:flex;gap:4px;overflow-x:auto;top:0;z-index:5}
+nav h1{display:none}
+nav button{width:auto;white-space:nowrap}
+.two{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav id="nav" aria-label="Modules"></nav>
+<main id="view"></main>
+</div>
+<div id="toast" role="status"></div>
+<script>
+const S={
+ tab:'Overview',cash:48200,
+ products:[
+  {sku:'TP-210',name:'Teak plank 2.1 m',stock:42,reorder:20,price:96,cost:61},
+  {sku:'RP-050',name:'Rope, 50 m coil',stock:14,reorder:15,price:38,cost:22},
+  {sku:'BR-016',name:'Brass cleat 16 cm',stock:120,reorder:60,price:12,cost:6.5},
+  {sku:'LN-004',name:'Deck lantern',stock:9,reorder:10,price:54,cost:31},
+  {sku:'CV-300',name:'Canvas roll 3 m',stock:27,reorder:12,price:71,cost:44}
+ ],
+ orders:[
+  {id:1001,customer:'Kestrel Marine',sku:'TP-210',qty:10,status:'Paid'},
+  {id:1002,customer:'Northpier Boatworks',sku:'BR-016',qty:40,status:'Shipped'},
+  {id:1003,customer:'Alder & Finch',sku:'CV-300',qty:6,status:'Open'}
+ ],
+ pos:[
+  {id:5001,supplier:'Sundar Timber Co.',sku:'TP-210',qty:30,status:'Ordered'},
+  {id:5002,supplier:'Ropeworks Ltd',sku:'RP-050',qty:25,status:'Received'}
+ ],
+ staff:[
+  {name:'Mara Quinn',role:'Warehouse lead',dept:'Operations',leave:'None'},
+  {name:'Dev Anand',role:'Accountant',dept:'Finance',leave:'Requested'},
+  {name:'Ines Costa',role:'Sales manager',dept:'Sales',leave:'None'},
+  {name:'Tomas Reyes',role:'Buyer',dept:'Purchasing',leave:'Approved'}
+ ],
+ ledger:[{d:'Opening balance',amt:48200}],
+ months:[['May',18.2],['Jun',21.5],['Jul',19.8],['Aug',24.1],['Sep',27.4],['Oct',0]],
+ nextOrder:1004,nextPo:5003
+};
+const $=s=>document.querySelector(s);
+const money=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+const prod=sku=>S.products.find(p=>p.sku===sku);
+const total=o=>o.qty*prod(o.sku).price;
+const poCost=p=>p.qty*prod(p.sku).cost;
+const tabs=['Overview','Sales','Inventory','Purchasing','Finance','People'];
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2200)}
+function chipStock(p){return p.stock<=p.reorder?'<span class="chip warn">Reorder</span>':'<span class="chip ok">In stock</span>'}
+function receivables(){return S.orders.filter(o=>o.status==='Shipped').reduce((a,o)=>a+total(o),0)}
+function payables(){return S.pos.filter(p=>p.status==='Received').reduce((a,p)=>a+poCost(p),0)}
+function revenue(){return S.orders.filter(o=>o.status!=='Open').reduce((a,o)=>a+total(o),0)}
+function stockValue(){return S.products.reduce((a,p)=>a+p.stock*p.cost,0)}
+function head(t,s){return `<h2>${t}</h2><p class="sub">${s}</p>`}
+function kpis(a){return '<div class="kpis">'+a.map(k=>`<div class="kpi"><span>${k[0]}</span><b>${k[1]}</b></div>`).join('')+'</div>'}
+
+const V={
+Overview(){
+ const open=S.orders.filter(o=>o.status==='Open').length;
+ const low=S.products.filter(p=>p.stock<=p.reorder);
+ S.months[5][1]=+(revenue()/1000).toFixed(1);
+ const max=Math.max(...S.months.map(m=>m[1]),1);
+ return head('Overview','Harbor &amp; Vale Trading, today’s position across every module.')+
+ kpis([['Cash',money(S.cash)],['Revenue booked',money(revenue())],['Open orders',open],['Items to reorder',low.length]])+
+ `<div class="two"><div class="panel"><h3>Revenue by month ($ thousands)</h3>${S.months.map(m=>`<div class="bar"><span>${m[0]}</span><i style="width:${m[1]/max*70}%"></i><span>${m[1]}</span></div>`).join('')}</div>
+ <div class="panel"><h3>Needs attention</h3>${low.length?low.map(p=>`<p>${p.name}: ${p.stock} left, reorder at ${p.reorder}. <button class="btn ghost" data-act="po" data-sku="${p.sku}">Create purchase order</button></p>`).join(''):'<p>Nothing is below its reorder level.</p>'}
+ ${S.staff.some(s=>s.leave==='Requested')?'<p>A leave request is waiting in People.</p>':''}</div></div>`;
+},
+Sales(){
+ return head('Sales','Create orders, ship them from stock, then record payment.')+
+ `<div class="panel"><h3>New sales order</h3><form class="row" id="f-order">
+ <label>Customer<input name="c" required placeholder="Customer name"></label>
+ <label>Product<select name="s">${S.products.map(p=>`<option value="${p.sku}">${p.name} (${p.stock} in stock)</option>`).join('')}</select></label>
+ <label>Quantity<input name="q" type="number" min="1" value="1" required></label>
+ <button class="btn">Create order</button></form></div>
+ <div class="panel scroll"><table><tr><th>Order</th><th>Customer</th><th>Product</th><th class="n">Qty</th><th class="n">Total</th><th>Status</th><th></th></tr>
+ ${S.orders.slice().reverse().map(o=>`<tr><td>#${o.id}</td><td>${o.customer}</td><td>${prod(o.sku).name}</td><td class="n">${o.qty}</td><td class="n">${money(total(o))}</td><td><span class="chip ${o.status==='Paid'?'ok':''}">${o.status}</span></td>
+ <td>${o.status==='Open'?`<button class="btn ghost" data-act="ship" data-id="${o.id}">Ship order</button>`:o.status==='Shipped'?`<button class="btn ghost" data-act="paid" data-id="${o.id}">Record payment</button>`:''}</td></tr>`).join('')}</table></div>`;
+},
+Inventory(){
+ return head('Inventory','Stock levels update when orders ship and purchase orders arrive.')+
+ kpis([['Stock value (at cost)',money(stockValue())],['Products',S.products.length],['Below reorder level',S.products.filter(p=>p.stock<=p.reorder).length]])+
+ `<div class="panel scroll"><table><tr><th>SKU</th><th>Product</th><th class="n">On hand</th><th class="n">Reorder at</th><th class="n">Cost</th><th class="n">Price</th><th>Status</th></tr>
+ ${S.products.map(p=>`<tr><td>${p.sku}</td><td>${p.name}</td><td class="n">${p.stock}</td><td class="n">${p.reorder}</td><td class="n">${money(p.cost)}</td><td class="n">${money(p.price)}</td><td>${chipStock(p)}</td></tr>`).join('')}</table></div>`;
+},
+Purchasing(){
+ return head('Purchasing','Order from suppliers, receive goods into stock, then pay the invoice.')+
+ `<div class="panel"><h3>New purchase order</h3><form class="row" id="f-po">
+ <label>Supplier<input name="v" required placeholder="Supplier name"></label>
+ <label>Product<select name="s">${S.products.map(p=>`<option value="${p.sku}">${p.name}</option>`).join('')}</select></label>
+ <label>Quantity<input name="q" type="number" min="1" value="20" required></label>
+ <button class="btn">Create purchase order</button></form></div>
+ <div class="panel scroll"><table><tr><th>PO</th><th>Supplier</th><th>Product</th><th class="n">Qty</th><th class="n">Cost</th><th>Status</th><th></th></tr>
+ ${S.pos.slice().reverse().map(p=>`<tr><td>#${p.id}</td><td>${p.supplier}</td><td>${prod(p.sku).name}</td><td class="n">${p.qty}</td><td class="n">${money(poCost(p))}</td><td><span class="chip ${p.status==='Paid'?'ok':''}">${p.status}</span></td>
+ <td>${p.status==='Ordered'?`<button class="btn ghost" data-act="recv" data-id="${p.id}">Receive goods</button>`:p.status==='Received'?`<button class="btn ghost" data-act="pay" data-id="${p.id}">Pay invoice</button>`:''}</td></tr>`).join('')}</table></div>`;
+},
+Finance(){
+ return head('Finance','Cash, what customers owe you, and what you owe suppliers.')+
+ kpis([['Cash',money(S.cash)],['Receivables',money(receivables())],['Payables',money(payables())],['Net position',money(S.cash+receivables()-payables())]])+
+ `<div class="panel scroll"><h3>Cash ledger</h3><table><tr><th>Entry</th><th class="n">Amount</th></tr>
+ ${S.ledger.slice().reverse().map(l=>`<tr><td>${l.d}</td><td class="n" style="color:var(--${l.amt<0?'bad':'ok'})">${l.amt<0?'−':'+'}${money(Math.abs(l.amt))}</td></tr>`).join('')}</table></div>`;
+},
+People(){
+ return head('People','Team directory and leave requests.')+
+ `<div class="panel scroll"><table><tr><th>Name</th><th>Role</th><th>Department</th><th>Leave</th><th></th></tr>
+ ${S.staff.map((s,i)=>`<tr><td>${s.name}</td><td>${s.role}</td><td>${s.dept}</td><td><span class="chip ${s.leave==='Requested'?'warn':''}">${s.leave}</span></td>
+ <td>${s.leave==='Requested'?`<button class="btn ghost" data-act="leave" data-i="${i}">Approve leave</button>`:''}</td></tr>`).join('')}</table></div>`;
+}};
+
+function render(){
+ $('#nav').innerHTML='<h1>Harbor &amp; Vale<small>Business system</small></h1>'+tabs.map(t=>`<button data-tab="${t}" ${t===S.tab?'aria-current="page"':''}>${t}</button>`).join('');
+ $('#view').innerHTML=V[S.tab]();
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.tab){S.tab=b.dataset.tab;render();window.scrollTo(0,0);return}
+ const a=b.dataset.act;if(!a)return;
+ const id=+b.dataset.id;
+ if(a==='ship'){const o=S.orders.find(x=>x.id===id),p=prod(o.sku);
+  if(p.stock<o.qty){toast('Not enough stock: '+p.stock+' on hand, '+o.qty+' needed');return}
+  p.stock-=o.qty;o.status='Shipped';toast('Order shipped')}
+ if(a==='paid'){const o=S.orders.find(x=>x.id===id);o.status='Paid';S.cash+=total(o);S.ledger.push({d:'Payment, order #'+o.id+' ('+o.customer+')',amt:total(o)});toast('Payment recorded')}
+ if(a==='recv'){const p=S.pos.find(x=>x.id===id);prod(p.sku).stock+=p.qty;p.status='Received';toast('Goods received into stock')}
+ if(a==='pay'){const p=S.pos.find(x=>x.id===id);p.status='Paid';S.cash-=poCost(p);S.ledger.push({d:'Supplier payment, PO #'+p.id+' ('+p.supplier+')',amt:-poCost(p)});toast('Invoice paid')}
+ if(a==='leave'){S.staff[+b.dataset.i].leave='Approved';toast('Leave approved')}
+ if(a==='po'){const p=prod(b.dataset.sku);S.pos.push({id:S.nextPo++,supplier:'Preferred supplier',sku:p.sku,qty:p.reorder*2,status:'Ordered'});S.tab='Purchasing';toast('Purchase order created')}
+ render();
+});
+document.addEventListener('submit',e=>{
+ e.preventDefault();const f=new FormData(e.target);
+ if(e.target.id==='f-order'){S.orders.push({id:S.nextOrder++,customer:f.get('c'),sku:f.get('s'),qty:+f.get('q'),status:'Open'});toast('Sales order created')}
+ if(e.target.id==='f-po'){S.pos.push({id:S.nextPo++,supplier:f.get('v'),sku:f.get('s'),qty:+f.get('q'),status:'Ordered'});toast('Purchase order created')}
+ render();
+});
+render();
+</script>
+</body>
+</html>
